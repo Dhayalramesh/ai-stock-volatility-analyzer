@@ -2,17 +2,12 @@ import torch
 import torch.nn as nn
 import pandas as pd
 import numpy as np
-import joblib
-import json
 import os
+import json
 
 # 🔹 LOAD FEATURE LIST
 with open("features.json", "r") as f:
     FEATURE_COLUMNS = json.load(f)
-
-# 🔹 LOAD SCALERS
-X_scaler = joblib.load("x_scaler.pkl")
-y_scaler = joblib.load("y_scaler.pkl")
 
 # 🔹 MODEL DEFINITION (same as training)
 class LSTMRegressor(nn.Module):
@@ -25,12 +20,12 @@ class LSTMRegressor(nn.Module):
         out, _ = self.lstm(x)
         return self.fc(out[:, -1, :])
 
-# 🔹 LOAD MODEL (SAFE FOR CLOUD)
+# 🔹 LOAD MODEL (OPTIONAL)
 model = None
 
 if os.path.exists("lstm_model.pth"):
-    model = LSTMRegressor(len(FEATURE_COLUMNS))
     try:
+        model = LSTMRegressor(len(FEATURE_COLUMNS))
         model.load_state_dict(torch.load("lstm_model.pth", map_location=torch.device("cpu")))
         model.eval()
     except:
@@ -58,32 +53,24 @@ def predict_stock(df):
         return None
 
     try:
-        # 🔹 SELECT FEATURES
-        X = df[FEATURE_COLUMNS].values
-
-        # 🔹 SCALE
-        X_scaled = X_scaler.transform(X)
-
-        # 🔹 LAST SEQUENCE
-        seq = X_scaled[-20:]
-
-        seq = np.array(seq, dtype=np.float32)
-        seq = np.expand_dims(seq, axis=0)
-
-        tensor = torch.tensor(seq)
-
-        # 🔹 IF MODEL EXISTS → USE ML
+        # 🔹 USE ML MODEL (if available locally)
         if model is not None:
-            with torch.no_grad():
-                pred_scaled = model(tensor).item()
+            X = df[FEATURE_COLUMNS].values
 
-            # Convert back
-            pred = y_scaler.inverse_transform([[pred_scaled]])[0][0]
+            # Take last sequence
+            seq = X[-20:]
+            seq = np.array(seq, dtype=np.float32)
+            seq = np.expand_dims(seq, axis=0)
+
+            tensor = torch.tensor(seq)
+
+            with torch.no_grad():
+                pred = model(tensor).item()
+
             return float(pred)
 
-        # 🔹 FALLBACK (CLOUD SAFE)
+        # 🔹 FALLBACK (for cloud deployment)
         else:
-            # simple volatility fallback
             vol = df["Close"].pct_change().rolling(10).std().iloc[-1]
             return float(np.log(vol + 1e-6))
 
