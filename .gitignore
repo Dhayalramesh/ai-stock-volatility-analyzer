@@ -1,0 +1,49 @@
+# 🔹 Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 🔹 Virtual Environment
+venv/
+.env/
+
+# 🔹 Data files (VERY IMPORTANT)
+data/
+*.csv
+*.xlsx
+
+# 🔹 ML Models & Artifacts
+*.pth
+*.pt
+*.pkl
+*.joblib
+
+# 🔹 Logs & temp
+*.log
+*.tmp
+
+# 🔹 LaTeX build files
+*.aux
+*.toc
+*.lof
+*.lot
+*.out
+
+# 🔹 OS files
+.DS_Store
+Thumbs.db
+
+# 🔹 Streamlit config (optional ignore)
+.streamlit/
+
+# 🔹 Zip / large files (IMPORTANT)
+*.zip
+*.tar
+*.gz
+
+# 🔹 Notebook checkpoints
+.ipynb_checkpoints/
+
+# 🔹 Misc
+*.bak
